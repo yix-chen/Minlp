@@ -97,7 +97,7 @@ A = [];
 b = [];
 
 % options = optimoptions('fmincon','MaxIterations',1e5,'MaxFunctionEvaluations',1e4,'TolFun',1e-4,'Display','iter','Algorithm','sqp');
-options = optimoptions('fmincon','MaxIterations',1e5,'MaxFunctionEvaluations',2e5,'TolFun',1e-4);
+options = optimoptions('fmincon','MaxIterations',1e5,'MaxFunctionEvaluations',1e4,'TolFun',1e-4);
 
 tolerance = 1e-3;
 Tmax = 1e3; % max iteration number

@@ -16,7 +16,7 @@ eng = matlab.engine.start_matlab()
 
 #basepath = '/Users/chyx/Study/JuniorSpringSummer/SrtpMinlp/simulation/data_4_2'
 
-basepath = '/Users/chyx/Study/JuniorSpringSummer/SrtpMinlp/simulation/data_7_2'
+basepath = '/Users/chyx/Study/JuniorSpringSummer/SrtpMinlp/simulation/data_4_2_avgleft'
 def policyRun(num_user0, num_bs0, bandwidth0, gain0, power_bs0, index, model, scaler):
     # 转化为全局变量
     global num_user, num_bs, bandwidth, gain, power_bs

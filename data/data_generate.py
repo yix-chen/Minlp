@@ -8,7 +8,7 @@ import bb.utils as bb
 #basepath = '/Users/chyx/Study/JuniorSpringSummer/SrtpMinlp/simulation/data_10_4/'
 #basepath = '/Users/chyx/Study/JuniorSpringSummer/SrtpMinlp/simulation/data_4_2/'
 
-basepath = '/Users/chyx/Study/JuniorSpringSummer/SrtpMinlp/simulation/data_7_2/'
+basepath = '/Users/chyx/Study/JuniorSpringSummer/SrtpMinlp/simulation/data_4_2_avgleft/'
 def data_generate(matfn, mode, num_total):
     data = sio.loadmat(matfn)
     num_user = data['num_user'][0, 0]
@@ -18,8 +18,8 @@ def data_generate(matfn, mode, num_total):
     gain = data['Gain_UB']
     power_bs = data['power_Vector']
 
-    for i in range(num_total):
-    #for i in (7,8,9):
+    #for i in range(num_total):
+    for i in (8,9):
         print("solving problem #%d..." % (i + 1))
 
         gain_i = gain[:, :, i].reshape((num_user, num_bs))

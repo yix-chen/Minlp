@@ -17,7 +17,7 @@ eng = matlab.engine.start_matlab()
 #basepath = '/Users/chyx/Study/JuniorSpringSummer/SrtpMinlp/simulation/data_10_4'
 #basepath = '/Users/chyx/Study/JuniorSpringSummer/SrtpMinlp/simulation/data_4_2'
 
-basepath = '/Users/chyx/Study/JuniorSpringSummer/SrtpMinlp/simulation/data_7_2'
+basepath = '/Users/chyx/Study/JuniorSpringSummer/SrtpMinlp/simulation/data_4_2_avgleft'
 
 class TreeNode:
     def __init__(self, x_d, depth):
@@ -150,41 +150,29 @@ def binaryPro(num_user0, num_bs0, bandwidth0, gain0, power_bs0, index, mode):  #
             else:
                 x_d_l = 0
             if node.depth == 0:
-                line_ind = 0
-                remainder_right = num_bs
-                remainder_left = 0
-
+                line_ind = 1
             else:
                 line_ind = int((x_d_k - 1) * num_bs + x_d_l)
-                remainder_right = int(x_d_k * num_bs) - line_ind
-                remainder_left = num_bs - remainder_right - 1
 
             node.sinr = sinr[line_ind - 1]
-            sinr_sumright = 0
-            sinr_sumleft = 0
 
-            for i in range(remainder_right):
-                sinr_sumright = sinr_sumright + sinr[line_ind+i]
-                if sinr[line_ind+i] > node.max_right:
-                    node.max_right = sinr[line_ind+i]
-            if remainder_right != 0:
-                sinr_sumright /= remainder_right
-                node.sinr_avgright = sinr_sumright
+            leftmargin = int((x_d_k - 1) * num_bs)
+            rightmargin = int(x_d_k * num_bs)
+            node.sinr_avgleft = 0
+            node.sinr_avgright = 0
+            node.sinr_maxleft = 0
+            node.sinr_maxright = 0
+
+            if x_d_k != 0:
+                if line_ind != rightmargin:
+                    node.sinr_avgright = np.mean(sinr[line_ind : rightmargin])
+                    node.sinr_maxright = np.max(sinr[line_ind : rightmargin])
+                if line_ind != leftmargin + 1:
+                    node.sinr_avgleft = np.mean(sinr[leftmargin : line_ind - 1])
+                    node.sinr_maxleft = np.max(sinr[leftmargin : line_ind - 1])
             else:
-                node.sinr_avgright = 0
-
-            for j in range(remainder_left):
-                sinr_sumleft = sinr_sumleft + sinr[line_ind-2-i]
-                if sinr[line_ind-2-i] > node.max_left:
-                    node.max_left = sinr[line_ind-2-i]
-            if remainder_left != 0:
-                sinr_sumleft /= remainder_left
-                node.sinr_avgleft = sinr_sumleft
-            else:
-                node.sinr_avgleft = 0
-
-
-
+                node.sinr_avgright = np.mean(sinr[:int(num_bs)])
+                node.sinr_maxright = np.max(sinr[:int(num_bs)])
 
 
             # node.power = K * L * p_max[line_ind] / p_max.sum()
@@ -348,7 +336,7 @@ def binaryPro(num_user0, num_bs0, bandwidth0, gain0, power_bs0, index, mode):  #
                     [node.depth / maxdepth, node.upper / root_bound, node.global_lower_bound / root_bound,
                      node.plunge_depth / maxdepth,
                      node.estobj / root_bound, node.leaf, node.solfound / maxdepth, node.gapobj / root_bound,
-                     node.branch, node.sinr])  # node.power, node.channel
+                     node.branch, node.sinr, node.sinr_avgleft])  # node.power, node.channel
                 if node.status == 1:
                     label_temp = np.array([1])
                     if flag == 0:
@@ -482,8 +470,27 @@ def binaryPro_oracle(num_user0, num_bs0, bandwidth0, gain0, power_bs0, index):  
             else:
                 line_ind = int((x_d_k - 1) * num_bs + x_d_l)
 
-            node.sinr = sinr[line_ind]
-            # node.power = K * L * p_max[line_ind] / p_max.sum()
+            node.sinr = sinr[line_ind - 1]
+
+            leftmargin = int((x_d_k - 1) * num_bs)
+            rightmargin = int(x_d_k * num_bs)
+            node.sinr_avgleft = 0
+            node.sinr_avgright = 0
+            node.sinr_maxleft = 0
+            node.sinr_maxright = 0
+
+            if x_d_k != 0:
+                if line_ind != rightmargin:
+                    node.sinr_avgright = np.mean(sinr[line_ind: rightmargin])
+                    node.sinr_maxright = np.max(sinr[line_ind: rightmargin])
+                if line_ind != leftmargin + 1:
+                    node.sinr_avgleft = np.mean(sinr[leftmargin: line_ind - 1])
+                    node.sinr_maxleft = np.max(sinr[leftmargin: line_ind - 1])
+            else:
+                node.sinr_avgright = np.mean(sinr[:int(num_bs)])
+                node.sinr_maxright = np.max(sinr[:int(num_bs)])
+
+        # node.power = K * L * p_max[line_ind] / p_max.sum()
             # node.channel = math.log(1 + 1 / (a[line_ind] + b[line_ind]), 2) / R_min_C
 
         optPath = basepath + '/oracle/problem' + str(index) + '_optimal.txt'
@@ -583,7 +590,7 @@ def binaryPro_oracle(num_user0, num_bs0, bandwidth0, gain0, power_bs0, index):  
             feature_tmp = np.array(
                 [node.depth / maxdepth, node.upper / root_bound, node.global_lower_bound / root_bound,
                  node.plunge_depth / maxdepth,
-                 node.solfound / maxdepth, node.branch, node.sinr])
+                 node.solfound / maxdepth, node.branch, node.sinr, node.sinr_avgleft])
 
             # node.power, node.channel])
 
@@ -747,7 +754,26 @@ def binaryPro_policy(num_user0, num_bs0, bandwidth0, gain0, power_bs0, index, mo
             else:
                 line_ind = int((x_d_k - 1) * num_bs + x_d_l)
 
-            node.sinr = sinr[line_ind]
+            node.sinr = sinr[line_ind - 1]
+
+            leftmargin = int((x_d_k - 1) * num_bs)
+            rightmargin = int(x_d_k * num_bs)
+            node.sinr_avgleft = 0
+            node.sinr_avgright = 0
+            node.sinr_maxleft = 0
+            node.sinr_maxright = 0
+
+            if x_d_k != 0:
+                if line_ind != rightmargin:
+                    node.sinr_avgright = np.mean(sinr[line_ind: rightmargin])
+                    node.sinr_maxright = np.max(sinr[line_ind: rightmargin])
+                if line_ind != leftmargin + 1:
+                    node.sinr_avgleft = np.mean(sinr[leftmargin: line_ind - 1])
+                    node.sinr_maxleft = np.max(sinr[leftmargin: line_ind - 1])
+            else:
+                node.sinr_avgright = np.mean(sinr[:int(num_bs)])
+                node.sinr_maxright = np.max(sinr[:int(num_bs)])
+
             # node.power = K * L * p_max[line_ind] / p_max.sum()
             # node.channel = math.log(1 + 1 / (a[line_ind] + b[line_ind]), 2) / R_min_C
 
@@ -848,7 +874,7 @@ def binaryPro_policy(num_user0, num_bs0, bandwidth0, gain0, power_bs0, index, mo
             feature_tmp = np.array(
                 [node.depth / maxdepth, node.upper / root_bound, node.global_lower_bound / root_bound,
                  node.plunge_depth / maxdepth,
-                 node.solfound / maxdepth, node.branch, node.sinr])
+                 node.solfound / maxdepth, node.branch, node.sinr, node.sinr_avgleft])
             # node.power, node.channel])
             # feature_tmp =  np.array([node.depth/maxdepth,node.upper/root_bound,node.global_lower_bound/root_bound,node.plunge_depth/maxdepth,
             #            node.solfound/maxdepth,node.branch])
@@ -876,7 +902,7 @@ def binaryPro_policy(num_user0, num_bs0, bandwidth0, gain0, power_bs0, index, mo
                 feature_check = np.array(
                     [node.depth / maxdepth, node.upper / root_bound, node.global_lower_bound / root_bound,
                      node.plunge_depth / maxdepth,
-                     node.solfound / maxdepth, node.branch, node.sinr])
+                     node.solfound / maxdepth, node.branch, node.sinr, node.sinr_avgleft])
                      #node.power, node.channel])
                 # feature_check = np.array([node.depth/maxdepth,node.upper/root_bound,node.global_lower_bound/root_bound,node.plunge_depth/maxdepth,
                 #        node.solfound/maxdepth,node.branch])
